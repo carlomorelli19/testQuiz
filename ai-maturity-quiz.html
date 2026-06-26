@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Maturity Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#002A3A;--forest:#034638;--burgundy:#651D32;
+  --yellow:#FDD17A;--pink:#F7CED7;--light-blue:#B9D9EB;
+  --taupe:#988873;--cream:#F9F6EC;
+  --blue-t1:#DBEBF4;--blue-t2:#EDF5FA;--pink-t1:#FAE6EA;
+  --warm:#E5E1DC;
+  --black:#161616;--grey-b:#353535;--grey-c:#C0C0C0;--grey-d:#E5E5E5;--white:#FFFFFF;
+  --display:'Playfair Display','Chap',Georgia,serif;
+  --body:'Work Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.10);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);color:var(--black);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* Layout — mobile-first, no excess padding */
+.app{max-width:480px;margin:0 auto}
+
+/* Hero — compact */
+.hero{background:var(--navy);color:var(--white);padding:32px 16px 28px;text-align:center}
+.hero-tag{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--yellow);margin-bottom:8px}
+.hero h1{font-family:var(--display);font-size:1.875rem;font-weight:400;line-height:1.15;margin-bottom:8px}
+.hero p{font-size:13px;opacity:.8;max-width:320px;margin:0 auto}
+
+/* Progress — sticky, tight */
+.prog{position:sticky;top:0;z-index:100;background:var(--cream);padding:10px 16px;border-bottom:1px solid var(--grey-d);display:none}
+.prog.on{display:block}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prog-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--navy)}
+.prog-count{font-size:12px;font-weight:500;color:var(--taupe)}
+.prog-track{height:3px;background:var(--grey-d);border-radius:9999px;overflow:hidden}
+.prog-fill{height:100%;background:var(--burgundy);border-radius:9999px;transition:width .5s var(--ease)}
+
+/* Section intro — forest */
+.sec-intro{background:var(--forest);color:var(--white);padding:20px 16px;margin-bottom:2px}
+.sec-intro .tag{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--yellow);margin-bottom:4px}
+.sec-intro h2{font-family:var(--display);font-size:1.375rem;font-weight:400;margin-bottom:4px}
+.sec-intro p{font-size:13px;opacity:.8}
+
+/* Question card — edge to edge */
+.qc{background:var(--white);padding:20px 16px;margin-bottom:2px;border-left:3px solid transparent;transition:border-color .2s var(--ease)}
+.qc.done{border-left-color:var(--forest)}
+.qc .qt{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--taupe);margin-bottom:4px}
+.qc .qq{font-size:15px;font-weight:600;color:var(--black);margin-bottom:4px}
+.qc .qh{font-size:12px;color:var(--taupe);margin-bottom:12px;font-style:italic}
+
+/* Options — single & multi */
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:center;gap:10px;padding:12px;background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;cursor:pointer;font-size:14px;color:var(--black);min-height:44px;transition:all .15s var(--ease);-webkit-tap-highlight-color:transparent;user-select:none}
+.opt:active{transform:scale(.98)}
+.opt.sel{background:var(--blue-t1);border-color:var(--navy)}
+
+/* Radio dot */
+.dot{width:18px;height:18px;min-width:18px;border-radius:9999px;border:2px solid var(--grey-c);display:flex;align-items:center;justify-content:center;transition:all .1s var(--ease)}
+.opt.sel .dot{border-color:var(--navy);background:var(--navy)}
+.opt.sel .dot::after{content:'';width:6px;height:6px;background:var(--white);border-radius:9999px}
+
+/* Checkbox */
+.chk{width:18px;height:18px;min-width:18px;border-radius:4px;border:2px solid var(--grey-c);display:flex;align-items:center;justify-content:center;transition:all .1s var(--ease)}
+.opt.sel .chk{border-color:var(--navy);background:var(--navy)}
+.opt.sel .chk::after{content:'✓';color:var(--white);font-size:11px;font-weight:700;line-height:1}
+
+.limit-msg{font-size:12px;color:var(--burgundy);font-weight:500;margin-top:6px;opacity:0;transition:opacity .2s}
+.limit-msg.show{opacity:1}
+
+/* Rating grid */
+.rg{border:1px solid var(--grey-d);border-radius:8px;overflow:hidden}
+.rg-head{display:grid;grid-template-columns:1fr repeat(3,56px);background:var(--navy);color:var(--white);font-size:10px;font-weight:500;text-align:center}
+.rg-head span{padding:8px 2px}
+.rg-head span:first-child{text-align:left;padding-left:12px}
+.rg-row{display:grid;grid-template-columns:1fr repeat(3,56px);border-bottom:1px solid var(--grey-d);background:var(--white)}
+.rg-row:last-child{border-bottom:none}
+.rg-row .rl{padding:10px 12px;font-size:13px;display:flex;align-items:center}
+.rc{display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+.rc .rd{width:18px;height:18px;border-radius:9999px;border:2px solid var(--grey-c);display:flex;align-items:center;justify-content:center;transition:all .1s var(--ease)}
+.rc.on .rd{border-color:var(--navy);background:var(--navy)}
+.rc.on .rd::after{content:'';width:6px;height:6px;background:var(--white);border-radius:9999px}
+
+/* Scale — 4-segment horizontal */
+.scale-wrap{display:flex;flex-direction:column;gap:6px}
+.scale-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.scale-seg{padding:12px 4px;text-align:center;font-size:12px;font-weight:500;color:var(--black);background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;cursor:pointer;transition:all .15s var(--ease);-webkit-tap-highlight-color:transparent;min-height:44px;display:flex;align-items:center;justify-content:center;line-height:1.3;user-select:none}
+.scale-seg:active{transform:scale(.96)}
+.scale-seg.sel{background:var(--navy);color:var(--white);border-color:var(--navy)}
+
+/* Followup */
+.fu{max-height:0;opacity:0;overflow:hidden;transition:max-height .35s var(--ease),opacity .2s var(--ease)}
+.fu.vis{max-height:160px;opacity:1;margin-top:12px}
+.fu label{display:block;font-size:12px;font-weight:500;color:var(--taupe);margin-bottom:4px}
+.tinput{width:100%;background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;padding:10px 12px;color:var(--black);font-family:var(--body);font-size:14px;outline:none;transition:border-color .2s var(--ease);resize:vertical;min-height:44px}
+.tinput:focus{border-color:var(--navy)}
+textarea.tinput{min-height:64px}
+
+/* Scale arrow for tooltip questions */
+.tip-scale-wrap{display:flex;gap:8px;align-items:stretch}
+.tip-scale-arrow{display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0;width:18px;flex-shrink:0}
+.tip-scale-arrow-line{flex:1;width:2px;background:linear-gradient(to bottom,var(--grey-d),var(--navy));border-radius:9999px;position:relative}
+.tip-scale-arrow-head{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid var(--navy);margin-top:2px}
+.tip-scale-label-lo{font-size:9px;color:var(--grey-c);font-weight:500;text-transform:uppercase;letter-spacing:.04em;writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:2px}
+.tip-scale-label-hi{font-size:9px;color:var(--navy);font-weight:600;text-transform:uppercase;letter-spacing:.04em;writing-mode:vertical-rl;transform:rotate(180deg);margin-top:2px}
+.tip-list-inner{flex:1;min-width:0}
+
+/* Tooltip options — vertical list with info icon */
+.tip-list{display:flex;flex-direction:column;gap:6px}
+.tip-opt{position:relative;background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;cursor:pointer;transition:all .15s var(--ease);-webkit-tap-highlight-color:transparent;user-select:none}
+.tip-opt:active{transform:scale(.98)}
+.tip-opt.sel{background:var(--navy);border-color:var(--navy)}
+.tip-opt-row{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 12px 14px;gap:8px;min-height:44px}
+.tip-opt-label{font-size:13px;font-weight:500;color:var(--black);line-height:1.3;flex:1}
+.tip-opt.sel .tip-opt-label{color:var(--white)}
+.tip-info{width:22px;height:22px;min-width:22px;border-radius:9999px;border:1.5px solid var(--grey-c);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--taupe);background:var(--white);transition:all .15s var(--ease);flex-shrink:0}
+.tip-opt.sel .tip-info{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.7);background:rgba(255,255,255,.15)}
+.tip-info:hover{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.tip-body{max-height:0;overflow:hidden;opacity:0;transition:max-height .3s var(--ease),opacity .2s var(--ease);font-size:12px;line-height:1.5;color:var(--grey-b);padding:0 14px}
+.tip-body.open{max-height:120px;opacity:1;padding:0 14px 12px}
+.tip-opt.sel .tip-body{color:rgba(255,255,255,.75)}
+
+/* Scale N/A row */
+.scale-na{display:flex;align-items:center;gap:10px;margin-top:6px;padding:10px 12px;background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;cursor:pointer;font-size:13px;color:var(--taupe);transition:all .15s var(--ease);-webkit-tap-highlight-color:transparent;user-select:none;min-height:44px}
+.scale-na.sel{background:var(--blue-t1);border-color:var(--navy);color:var(--black)}
+.chk-na{width:16px;height:16px;min-width:16px;border-radius:4px;border:2px solid var(--grey-c);display:flex;align-items:center;justify-content:center;transition:all .1s var(--ease)}
+.chk-na.on{border-color:var(--navy);background:var(--navy)}
+.chk-na.on::after{content:'✓';color:var(--white);font-size:10px;font-weight:700;line-height:1}
+.open-wrap label{display:block;font-size:12px;font-weight:500;color:var(--taupe);margin-bottom:4px}
+
+/* Nav */
+.nav{display:flex;justify-content:space-between;padding:16px;gap:12px;background:var(--cream);position:sticky;bottom:0;border-top:1px solid var(--grey-d)}
+.btn{font-family:var(--body);font-size:15px;font-weight:600;padding:14px 24px;border-radius:8px;border:none;cursor:pointer;min-height:44px;transition:all .2s var(--ease);-webkit-tap-highlight-color:transparent}
+.btn:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.btn-p{background:var(--navy);color:var(--white);flex:1}
+.btn-p:active{background:#003A4F}
+.btn-p:disabled{opacity:.35;cursor:not-allowed}
+.btn-s{background:transparent;color:var(--black);border:1px solid var(--navy);min-width:44px;padding:14px 16px}
+.btn-s:active{background:var(--blue-t2)}
+
+/* Results */
+.res-hero{background:var(--navy);color:var(--white);padding:32px 16px;text-align:center}
+.res-hero .tag{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--yellow);margin-bottom:8px}
+.res-hero h2{font-family:var(--display);font-size:1.75rem;font-weight:400;margin-bottom:4px}
+
+.ring-wrap{display:flex;justify-content:center;margin:24px 0 16px}
+.ring{width:160px;height:160px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-family:var(--display);font-size:2.5rem;font-weight:400;color:var(--white)}
+.ring-max{font-size:12px;color:var(--light-blue)}
+
+.badge{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:6px 20px;border-radius:9999px;margin-bottom:16px}
+
+.res-desc{font-size:14px;max-width:340px;margin:0 auto;opacity:.85;line-height:1.6}
+
+/* Breakdown */
+.bd-grid{padding:0 16px 24px}
+.bd{background:var(--white);border-radius:8px;padding:16px;margin-top:12px;box-shadow:var(--shadow-sm)}
+.bd .bd-t{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--taupe);margin-bottom:8px}
+.bd-sr{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.bd-sn{font-family:var(--display);font-size:1.5rem;font-weight:400;color:var(--black)}
+.bd-sm{font-size:12px;color:var(--taupe)}
+.bd-track{height:6px;background:var(--grey-d);border-radius:9999px;overflow:hidden;margin-bottom:8px}
+.bd-fill{height:100%;border-radius:9999px;transition:width 1s var(--ease)}
+.bd-adv{font-size:13px;color:var(--black);line-height:1.5}
+
+/* Sections */
+.sec{display:none}.sec.on{display:block;animation:up .3s var(--ease)}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Collapsible panels */
+.panel-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;padding:16px;background:var(--white);border-bottom:1px solid var(--grey-d)}
+.panel-hdr:first-child{border-radius:0}
+.panel-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--navy)}
+.panel-chevron{width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:transform .25s var(--ease);color:var(--taupe);flex-shrink:0}
+.panel-chevron svg{display:block}
+.panel-body{overflow:hidden;transition:max-height .35s var(--ease),opacity .25s var(--ease);max-height:2000px;opacity:1}
+.panel-body.closed{max-height:0;opacity:0}
+.panel-hdr.closed .panel-chevron{transform:rotate(-90deg)}
+.panel-wrap{background:var(--white);border-radius:8px;overflow:hidden;margin-top:12px;box-shadow:var(--shadow-sm)}
+
+/* Email gate modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--white);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:28px 20px 36px;animation:slideUp .3s var(--ease)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-tag{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--burgundy);margin-bottom:6px}
+.modal h3{font-family:var(--display);font-size:1.25rem;font-weight:400;color:var(--navy);margin-bottom:8px;line-height:1.3}
+.modal p{font-size:13px;color:var(--grey-b);margin-bottom:20px;line-height:1.5}
+.modal-field{margin-bottom:12px}
+.modal-field label{display:block;font-size:12px;font-weight:500;color:var(--taupe);margin-bottom:4px}
+.modal-field input{width:100%;background:var(--cream);border:1px solid var(--grey-d);border-radius:8px;padding:11px 12px;font-family:var(--body);font-size:14px;color:var(--black);outline:none;transition:border-color .2s var(--ease)}
+.modal-field input:focus{border-color:var(--navy)}
+.modal-err{font-size:12px;color:var(--burgundy);margin-top:4px;display:none}
+.modal-err.show{display:block}
+.modal-submit{width:100%;background:var(--navy);color:var(--white);font-family:var(--body);font-size:15px;font-weight:600;padding:14px;border:none;border-radius:8px;cursor:pointer;margin-top:4px;transition:background .15s var(--ease)}
+.modal-submit:active{background:#003A4F}
+.modal-cancel{display:block;text-align:center;font-size:13px;color:var(--taupe);margin-top:12px;cursor:pointer;background:none;border:none;width:100%;font-family:var(--body)}
+.modal-success{text-align:center;padding:8px 0 4px}
+.modal-success .check{width:48px;height:48px;background:var(--forest);border-radius:9999px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.modal-success h3{font-family:var(--display);font-size:1.25rem;color:var(--navy);margin-bottom:6px}
+.modal-success p{font-size:13px;color:var(--grey-b);line-height:1.5}
+
+/* Get PDF button */
+.get-pdf-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:16px 16px 0;background:var(--burgundy);color:var(--white);font-family:var(--body);font-size:14px;font-weight:600;padding:14px;border:none;border-radius:8px;cursor:pointer;transition:background .15s var(--ease);-webkit-tap-highlight-color:transparent}
+.get-pdf-btn:active{background:#4a1524}
+
+/* Print styles */
+@media print{
+  .nav,.prog,.get-pdf-btn,.modal-bg{display:none!important}
+  .panel-body.closed{max-height:none!important;opacity:1!important}
+  .panel-hdr{cursor:default}
+  body{background:white;font-size:12px}
+  .app{max-width:100%}
+  .res-hero,.sec-intro{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bd{break-inside:avoid;box-shadow:none;border:1px solid #e5e5e5}
+  .panel-wrap{box-shadow:none;border:1px solid #e5e5e5;break-inside:avoid}
+  @page{margin:12mm;size:A4}
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="hero" id="hero">
+    <div class="hero-tag">Interactive Assessment</div>
+    <h1>AI Maturity in B2B Sales & Marketing</h1>
+    <p>Benchmark your AI readiness in about 5 minutes.</p>
+  </div>
+
+  <div id="gate" style="background:var(--white);padding:20px 16px 24px;border-bottom:1px solid var(--grey-d)">
+    <p style="font-size:13px;color:var(--taupe);margin-bottom:16px;line-height:1.5">Enter your details to receive a personalised follow-up after the event.</p>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--taupe);margin-bottom:4px">First name</label>
+      <input id="gateName" type="text" class="tinput" placeholder="Anna" autocomplete="given-name" oninput="gateCheck()" style="min-height:44px"/>
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--taupe);margin-bottom:4px">Work email</label>
+      <input id="gateEmail" type="email" class="tinput" placeholder="anna@company.com" autocomplete="email" oninput="gateCheck()" style="min-height:44px"/>
+      <div id="gateErr" style="font-size:12px;color:var(--burgundy);margin-top:4px;display:none">Please enter a valid work email to continue.</div>
+    </div>
+  </div>
+
+  <div class="prog" id="prog">
+    <div class="prog-row">
+      <span class="prog-label" id="pLabel"></span>
+      <span class="prog-count" id="pCount"></span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="pFill" style="width:0%"></div></div>
+  </div>
+
+  <div id="box"></div>
+
+  <div class="nav">
+    <button class="btn btn-s" id="bBack" style="visibility:hidden" onclick="go(-1)">←</button>
+    <button class="btn btn-p" id="bNext" onclick="go(1)" disabled style="opacity:.35;cursor:not-allowed">Start →</button>
+  </div>
+</div>
+
+<script>
+const A={};let cur=-1,S=[],QUIZ_RESULT={},GATE_NAME='',GATE_EMAIL='';
+
+function role(){const v=A['P1'];return v===0?'sales':v===1?'marketing':v===2?'both':null}
+
+function build(){
+  S=[];
+  const r=role();
+
+  // P0 — Profile
+  S.push({id:'profile',label:'PART 1 OF 4',title:'Your Profile',desc:'Quick context so we can tailor the results.',qs:[
+    {id:'P1',tag:'P1',q:'What best describes your role?',m:'single',opts:['Sales leadership','Marketing leadership','Both / Revenue leadership']},
+    {id:'P2',tag:'P2',q:'How many people are in your sales and marketing team?',m:'single',opts:['Under 10','10–50','50–200','200+'],fu:{t:'all',l:'What\'s the rough split between sales and marketing?'}},
+    {id:'P3',tag:'P3',q:'How do you primarily get new customers?',m:'rating',rl:['Main channel','Secondary','Not used'],ri:['Outbound (cold outreach)','Inbound (content & SEO)','Product-led (free trials, freemium)','Partners & resellers']},
+  ]});
+
+  // P1 — Business
+  const sQ=[
+    {id:'S1',tag:'S1',q:'What\'s your typical deal size?',m:'single',opts:['Under €10K','€10K–€50K','€50K–€200K','€200K–€1M','€1M+']},
+    {id:'S2',tag:'S2',q:'What share of deals do you actually close?',m:'single',opts:['Under 10%','10–20%','20–35%','35–50%','Over 50%','We don\'t track this']},
+    {id:'S3',tag:'S3',q:'How much of a typical rep\'s week goes on admin, CRM updates, and internal meetings — rather than selling?',m:'single',opts:['Under 20%','20–40%','40–60%','Over 60%']},
+  ];
+  const mQ=[
+    {id:'M1',tag:'M1',q:'How many new leads does marketing bring in per month?',m:'single',opts:['Under 50','50–200','200–1K','1K–5K','5K+']},
+    {id:'M2',tag:'M2',q:'Of those leads, how many turn into real sales conversations?',m:'single',opts:['Under 5%','5–15%','15–30%','Over 30%','We don\'t track this']},
+  ];
+  let bQ=r==='sales'?sQ:r==='marketing'?mQ:[...sQ,...mQ];
+  S.push({id:'biz',label:'PART 2 OF 4',title:'Business Snapshot',desc:'We\'ll use these numbers to model where AI could have the biggest impact.',qs:bQ});
+
+  // P2 — Maturity (scored)
+  S.push({id:'mat',label:'PART 3 OF 4',title:'AI Maturity',desc:'This section is scored — it\'s a mix of picks and quick scales.',qs:[
+    {id:'A1',tag:'A1 · TOOLS',q:'How is your team using AI tools today?',m:'single',scored:true,opts:[
+      'No shared tools — a few individuals experimenting on their own',
+      'We use AI assistants (e.g. Copilot, ChatGPT) for writing and research',
+      'We have access to a platform to build or manage AI workflows and agents',
+      'AI is embedded across our commercial stack — CRM, outreach, reporting'
+    ],fu:{t:[1,2,3],l:'Which tools are people using?'}},
+    {id:'A2',tag:'A2 · AGENTS',q:'Have you deployed any AI agents — software that takes actions automatically on your behalf?',m:'single',scored:true,opts:[
+      'No, we haven\'t looked into it',
+      'We have identified a list of use cases to explore',
+      'We\'ve run a pilot or experiment',
+      'We have one or two running in production',
+      'Multiple agents are live across sales and marketing'
+    ],fu:{t:[1,2,3,4],l:'What are they doing?'}},
+    {id:'A3',tag:'A3 · INTEGRATION',q:'How do your AI and commercial tools share data with each other?',m:'tooltip',scored:true,opts:[
+      'Manual copy-paste',
+      'Basic automations',
+      'API / MCP connections',
+      'Unified data layer'
+    ],tips:[
+      'Data moves by hand — CSV exports, copy-paste between tabs, spreadsheets as the bridge between tools.',
+      'Point-to-point triggers via Zapier, Make, or native integrations. Works for simple flows but breaks under complexity.',
+      'Programmatic real-time integrations — your CRM, email sequencer, and intent data talk to each other via APIs or MCP connectors.',
+      'A semantic or data cloud layer (e.g. Salesforce Data Cloud, dbt, a CDP) where all commercial data is harmonised and agents query one source of truth.'
+    ],fu:{t:[2,3],l:'Which systems are connected?'}},
+    {id:'B1',tag:'B1 · DATA',q:'How would you describe the state of your customer and sales data?',m:'tooltip',scored:true,opts:[
+      'Siloed & incomplete',
+      'Centralised but dirty',
+      'Clean & enriched',
+      'Unified with behavioural signals'
+    ],tips:[
+      'Contacts in one system, deals in another, no shared IDs. Duplicates everywhere, key fields empty, no reliable account view.',
+      'Data lives in one CRM but enrichment is inconsistent, firmographics are stale, and activity isn\'t reliably logged from calls or email.',
+      'Accounts and contacts are deduplicated, enriched (company size, industry, intent signals), and activity is reliably captured across channels.',
+      'Transactional, firmographic, and behavioural data (web, product, support) are joined at the account level and accessible to agents in real time.'
+    ],scaleNote:'Not applicable / don\'t know'},
+    {id:'C1',tag:'C1 · GOVERNANCE',q:'Who owns AI in your organisation — and how are decisions made?',m:'tooltip',scored:true,opts:[
+      'No ownership',
+      'Tech / IT owns it',
+      'Business units own it',
+      'Centralised AI team',
+      'Federated model'
+    ],tips:[
+      'AI happens informally. Individuals experiment with tools the company hasn\'t sanctioned, no one is accountable for outcomes or spend.',
+      'AI is treated as infrastructure. The technical team prioritises and governs it — business units are consumers, not drivers.',
+      'Individual teams (sales, marketing, RevOps) run their own AI initiatives independently. Fast but fragmented, no shared standards or data.',
+      'A dedicated function — AI CoE, AI team, or similar — sets standards, evaluates tools, and prioritises use cases across the business.',
+      'A central AI function sets guardrails and standards; embedded AI leads within each business unit drive execution. Business and tech co-own outcomes.'
+    ]},
+    {id:'D1',tag:'D1 · TEAM',q:'How would you describe your team\'s attitude toward AI?',m:'scale',scored:true,
+      sl:['Avoiding it','Curious but cautious','Using it regularly','Pushing for more']},
+  ]});
+
+  // P3 — Opportunity
+  S.push({id:'opp',label:'PART 4 OF 4',title:'AI Opportunities',desc:'Where do you see the biggest potential?',qs:[
+    {id:'O1',tag:'O1',q:'Where do you most want AI to help? Pick up to 3.',m:'multi',mx:3,opts:[
+      'Finding and targeting new leads','Qualifying leads faster','Creating content at scale',
+      'Following up with prospects','Forecasting revenue','Researching accounts & competitors',
+      'Generating proposals & RFPs','Handoffs between marketing and sales','Internal ops & reporting'
+    ],fu:{t:'all',l:'Any specific use cases in mind?'}},
+    {id:'O2',tag:'O2',q:'What\'s getting in the way? Pick up to 3.',m:'multi',mx:3,opts:[
+      'Our data is a mess','We don\'t have the skills','We can\'t prove the ROI',
+      'Legal or compliance concerns','Too many options, hard to choose','No leadership buy-in or budget','Our tools don\'t support it'
+    ],fu:{t:'all',l:'Anything to add?'}},
+    {id:'O3',tag:'O3',q:'What\'s the one task your team wastes the most time on?',m:'open'},
+  ]});
+}
+
+// ============ Render ============
+function render(i){
+  const s=S[i];let h=`<div class="sec on">`;
+  h+=`<div class="sec-intro"><div class="tag">${s.label}</div><h2>${s.title}</h2><p>${s.desc}</p></div>`;
+
+  s.qs.forEach((q,qi)=>{
+    const done=isDone(q);
+    h+=`<div class="qc ${done?'done':''}" id="qc-${q.id}"><div class="qt">${q.tag}</div><div class="qq">${q.q}</div>`;
+
+    if(q.m==='single'){
+      h+=`<div class="opts">`;
+      q.opts.forEach((o,oi)=>{
+        h+=`<div class="opt ${A[q.id]===oi?'sel':''}" onclick="pick('${q.id}',${oi},${i},${qi})"><div class="dot"></div><div>${o}</div></div>`;
+      });
+      h+=`</div>`;
+    }
+
+    else if(q.m==='multi'){
+      h+=`<div class="qh">Select up to ${q.mx}</div><div class="opts" id="mo-${q.id}">`;
+      const sel=A[q.id]||[];
+      q.opts.forEach((o,oi)=>{
+        h+=`<div class="opt ${sel.includes(oi)?'sel':''}" onclick="mpick('${q.id}',${oi},${q.mx},${i},${qi})"><div class="chk"></div><div>${o}</div></div>`;
+      });
+      h+=`</div><div class="limit-msg" id="lm-${q.id}">Maximum ${q.mx} reached</div>`;
+    }
+
+    else if(q.m==='rating'){
+      h+=`<div class="rg"><div class="rg-head"><span></span>`;
+      q.rl.forEach(l=>{h+=`<span>${l}</span>`;});
+      h+=`</div>`;
+      q.ri.forEach((item,ri)=>{
+        h+=`<div class="rg-row"><div class="rl">${item}</div>`;
+        q.rl.forEach((_,ci)=>{
+          const k=q.id+'_r'+ri;
+          h+=`<div class="rc ${A[k]===ci?'on':''}" onclick="rpick('${q.id}',${ri},${ci},${i})"><div class="rd"></div></div>`;
+        });
+        h+=`</div>`;
+      });
+      h+=`</div>`;
+    }
+
+    else if(q.m==='scale'){
+      h+=`<div class="scale-wrap"><div class="scale-bar">`;
+      q.sl.forEach((l,si)=>{
+        h+=`<div class="scale-seg ${A[q.id]===si?'sel':''}" onclick="spick('${q.id}',${si},${i},${qi})">${l}</div>`;
+      });
+      h+=`</div>`;
+      if(q.scaleNote){
+        const naIdx=q.sl.length;
+        h+=`<div class="scale-na ${A[q.id]===naIdx?'sel':''}" onclick="spick('${q.id}',${naIdx},${i},${qi})"><div class="chk-na ${A[q.id]===naIdx?'on':''}"></div><span>${q.scaleNote}</span></div>`;
+      }
+      h+=`</div>`;
+    }
+
+    else if(q.m==='tooltip'){
+      h+=`<div class="tip-scale-wrap">
+        <div class="tip-scale-arrow">
+          <span class="tip-scale-label-lo">basic</span>
+          <div class="tip-scale-arrow-line"></div>
+          <div class="tip-scale-arrow-head"></div>
+          <span class="tip-scale-label-hi">advanced</span>
+        </div>
+        <div class="tip-list-inner"><div class="tip-list">`;
+      q.opts.forEach((opt,oi)=>{
+        const sel=A[q.id]===oi;
+        const tipId='tip-'+q.id+'-'+oi;
+        h+=`<div class="tip-opt${sel?' sel':''}" id="topt-${q.id}-${oi}" onclick="tpick('${q.id}',${oi},${i},${qi})"><div class="tip-opt-row"><span class="tip-opt-label">${opt}</span><span class="tip-info" onclick="event.stopPropagation();toggleTip('${tipId}')" title="More detail">i</span></div><div class="tip-body" id="${tipId}">${q.tips[oi]}</div></div>`;
+      });
+      h+=`</div></div></div>`;
+      if(q.scaleNote){
+        const naIdx=q.opts.length;
+        h+=`<div class="scale-na ${A[q.id]===naIdx?'sel':''}" onclick="tpick('${q.id}',${naIdx},${i},${qi})" style="margin-top:6px"><div class="chk-na ${A[q.id]===naIdx?'on':''}"></div><span>${q.scaleNote}</span></div>`;
+      }
+    }
+
+    else if(q.m==='open'){
+      h+=`<div class="open-wrap"><label>Your answer</label><textarea class="tinput" placeholder="Type here…" oninput="otxt('${q.id}',this.value)">${A[q.id+'_open']||''}</textarea></div>`;
+    }
+
+    // Followup
+    if(q.fu&&q.m!=='open'){
+      const vis=fuVis(q);
+      h+=`<div class="fu ${vis?'vis':''}" id="fu-${q.id}"><label>${q.fu.l}</label><input type="text" class="tinput" placeholder="Type here…" value="${A[q.id+'_d']||''}" oninput="A['${q.id}_d']=this.value"/></div>`;
+    }
+
+    h+=`</div>`;
+  });
+
+  h+=`</div>`;
+  document.getElementById('box').innerHTML=h;
+}
+
+function isDone(q){
+  if(q.m==='open')return !!(A[q.id+'_open']||'').trim();
+  if(q.m==='rating')return q.ri.every((_,i)=>A[q.id+'_r'+i]!==undefined);
+  if(q.m==='multi')return(A[q.id]||[]).length>0;
+  return A[q.id]!==undefined;
+}
+
+function fuVis(q){
+  if(!q.fu)return false;
+  if(q.m==='multi')return(A[q.id]||[]).length>0;
+  if(q.fu.t==='all')return A[q.id]!==undefined;
+  return q.fu.t.includes(A[q.id]);
+}
+
+// ============ Interactions ============
+function pick(id,oi,si,qi){
+  A[id]=oi;
+  if(id==='P1')build();
+  refresh(id,si,qi);prog();
+}
+
+function mpick(id,oi,mx,si,qi){
+  if(!A[id])A[id]=[];
+  const a=A[id],idx=a.indexOf(oi);
+  if(idx>-1)a.splice(idx,1);
+  else if(a.length<mx)a.push(oi);
+  else{const el=document.getElementById('lm-'+id);if(el){el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1200)}return;}
+  refresh(id,si,qi);prog();
+}
+
+function tpick(id,oi,si,qi){
+  A[id]=oi;
+  // Update visual state
+  const q=S[si].qs.find(qq=>qq.id===id);
+  if(q){
+    q.opts.forEach((_,idx)=>{
+      const el=document.getElementById(`topt-${id}-${idx}`);
+      if(el)el.classList.toggle('sel',idx===oi);
+    });
+    // N/A row — toggle correctly (oi===naIdx means N/A was just selected)
+    const naIdx=q.opts.length;
+    const na=document.querySelector(`#qc-${id} .scale-na`);
+    if(na){
+      na.classList.toggle('sel',oi===naIdx);
+      const chkNa=na.querySelector('.chk-na');
+      if(chkNa)chkNa.classList.toggle('on',oi===naIdx);
+    }
+    const card=document.getElementById('qc-'+id);
+    if(card&&isDone(q))card.classList.add('done');
+    const fu=document.getElementById('fu-'+id);
+    if(fu)fu.classList.toggle('vis',fuVis(q));
+  }
+  prog();
+}
+
+function toggleTip(tipId){
+  const el=document.getElementById(tipId);
+  if(!el)return;
+  // Close any other open tips in the same question
+  const parent=el.closest('.tip-list');
+  if(parent)parent.querySelectorAll('.tip-body.open').forEach(b=>{if(b.id!==tipId)b.classList.remove('open');});
+  el.classList.toggle('open');
+}
+
+
+function rpick(id,ri,ci,si){
+  A[id+'_r'+ri]=ci;
+  const card=document.getElementById('qc-'+id);
+  if(card){
+    card.querySelectorAll('.rg-row').forEach((row,r)=>{
+      row.querySelectorAll('.rc').forEach((c,cc)=>{c.classList.toggle('on',A[id+'_r'+r]===cc)});
+    });
+    const q=S[si].qs.find(qq=>qq.id===id);
+    if(q&&isDone(q))card.classList.add('done');
+  }
+  prog();
+}
+
+function spick(id,si,secI,qi){
+  A[id]=si;
+  refresh(id,secI,qi);prog();
+}
+
+function otxt(id,v){
+  A[id+'_open']=v;
+  const c=document.getElementById('qc-'+id);
+  if(c)c.classList.toggle('done',v.trim().length>0);
+  prog();
+}
+
+function refresh(id,si,qi){
+  const q=S[si].qs[qi],card=document.getElementById('qc-'+id);
+  if(!card)return;
+  if(isDone(q))card.classList.add('done');
+
+  if(q.m==='single'){
+    card.querySelectorAll('.opt').forEach((o,i)=>o.classList.toggle('sel',A[id]===i));
+  }else if(q.m==='multi'){
+    const a=A[id]||[];
+    card.querySelectorAll('.opt').forEach((o,i)=>o.classList.toggle('sel',a.includes(i)));
+  }else if(q.m==='scale'){
+    const naIdx=q.sl?q.sl.length:-1;
+    card.querySelectorAll('.scale-seg').forEach((s,i)=>s.classList.toggle('sel',A[id]===i));
+    const naEl=card.querySelector('.scale-na');
+    if(naEl)naEl.classList.toggle('sel',A[id]===naIdx);
+    const naChk=card.querySelector('.chk-na');
+    if(naChk)naChk.classList.toggle('on',A[id]===naIdx);
+  }
+
+  if(q.fu){
+    const fu=document.getElementById('fu-'+id);
+    if(fu)fu.classList.toggle('vis',fuVis(q));
+  }
+}
+
+// ============ Progress ============
+function prog(){
+  if(cur<0)return;
+  const s=S[cur];let t=s.qs.length,d=0;
+  s.qs.forEach(q=>{if(isDone(q))d++});
+  document.getElementById('pLabel').textContent=s.label;
+  document.getElementById('pCount').textContent=d+' / '+t;
+  let gt=0,gd=0;
+  S.forEach(ss=>ss.qs.forEach(q=>{gt++;if(isDone(q))gd++}));
+  document.getElementById('pFill').style.width=(gd/gt*100)+'%';
+}
+
+// ============ Gate ============
+function gateCheck(){
+  const name=document.getElementById('gateName').value.trim();
+  const email=document.getElementById('gateEmail').value.trim();
+  const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const valid=name.length>0&&emailRe.test(email);
+  const btn=document.getElementById('bNext');
+  btn.disabled=!valid;
+  btn.style.opacity=valid?'1':'0.35';
+  btn.style.cursor=valid?'pointer':'not-allowed';
+}
+
+// ============ Navigation ============
+function go(d){
+  if(cur===-1&&d===1){
+    const name=document.getElementById('gateName').value.trim();
+    const email=document.getElementById('gateEmail').value.trim();
+    const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!name||!emailRe.test(email)){document.getElementById('gateErr').style.display='block';return;}
+    GATE_NAME=name;GATE_EMAIL=email;
+    document.getElementById('gate').style.display='none';
+    document.getElementById('gateErr').style.display='none';
+    build();cur=0;document.getElementById('prog').classList.add('on');render(0);document.getElementById('bBack').style.visibility='visible';document.getElementById('bNext').textContent='Next →';document.getElementById('bNext').disabled=false;document.getElementById('bNext').style.opacity='1';document.getElementById('bNext').style.cursor='pointer';prog();scroll();return
+  }
+  const n=cur+d;
+  if(n<0){cur=-1;document.getElementById('box').innerHTML='';document.getElementById('prog').classList.remove('on');document.getElementById('bBack').style.visibility='hidden';document.getElementById('bNext').textContent='Start →';document.getElementById('gate').style.display='block';scroll();return}
+  if(cur===0&&d===1)build();
+  if(n>=S.length){results();return}
+  cur=n;render(cur);prog();
+  document.getElementById('bNext').textContent=cur===S.length-1?'See Results →':'Next →';
+  scroll();
+}
+function scroll(){window.scrollTo({top:0,behavior:'smooth'})}
+
+// ============ Results ============
+function results(){
+  document.getElementById('prog').classList.remove('on');
+  document.querySelector('.nav').style.display='none';
+
+  const ms=S.find(s=>s.id==='mat');
+  let tot=0,mx=0;
+  const cats={
+    'Adoption & Tooling':{ids:['A1','A2','A3'],s:0,mx:0,c:'var(--navy)',a:''},
+    'Data Readiness':{ids:['B1'],s:0,mx:0,c:'var(--forest)',a:''},
+    'Governance':{ids:['C1'],s:0,mx:0,c:'var(--burgundy)',a:''},
+    'Team Readiness':{ids:['D1'],s:0,mx:0,c:'var(--taupe)',a:''},
+  };
+
+  ms.qs.forEach(q=>{
+    const raw=A[q.id];
+    if(q.m==='tooltip'){
+      // N/A only on B1 (scaleNote present), value === opts.length
+      const naIdx=q.scaleNote?q.opts.length:-1;
+      if(raw===undefined||raw===naIdx){tot+=0;mx+=3;for(const c in cats){if(cats[c].ids.includes(q.id)){cats[c].s+=0;cats[c].mx+=3}}}
+      else{
+        // Map option index to 0–3 score range
+        const maxOpt=q.opts.length-1;
+        const v=Math.round((raw/maxOpt)*3);
+        tot+=v;mx+=3;for(const c in cats){if(cats[c].ids.includes(q.id)){cats[c].s+=v;cats[c].mx+=3}}
+      }
+    } else {
+      // Use actual option count as max so A2's 5-option scale scores correctly
+      const optMax=q.sl?q.sl.length:(q.opts?q.opts.length:4);
+      const naIdx=q.sl?q.sl.length:-1;
+      const v=(raw!==undefined&&raw!==naIdx)?raw+1:0;
+      tot+=v;mx+=optMax;
+      for(const c in cats){if(cats[c].ids.includes(q.id)){cats[c].s+=v;cats[c].mx+=optMax}}
+    }
+  });
+
+  for(const c in cats){
+    const p=cats[c].mx>0?cats[c].s/cats[c].mx:0;
+    if(c==='Adoption & Tooling')cats[c].a=p<.5?'Standardise approved tools and get shadow AI under control. Most B2B teams are here — the priority is moving from ad-hoc experimentation to a consistent, approved stack.':p<.75?'Good foundation. The next step is integrating tools into your core systems (CRM, email, data) and running your first focused agent pilot.':'Strong adoption. The gains now come from compounding — connecting agents into workflows that run without manual triggers.';
+    else if(c==='Data Readiness')cats[c].a=p<.5?'Data quality is the #1 factor we see holding back AI success in B2B. Before scaling any agent, prioritise cleaning and unifying your customer and sales data — every hour spent here pays back in agent reliability.':p<.75?'Close the gaps between your sales and marketing data systems. Agents are only as good as the context they can access — patchy data means patchy decisions.':'Solid data foundation — you\'re ready for advanced use cases including real-time pipeline insights and predictive signals.';
+    else if(c==='Governance')cats[c].a=p<.5?'Create a lightweight AI policy and assign a clear owner. Without governance, teams default to shadow AI tools — which creates risk and makes it impossible to measure what\'s actually working.':p<.75?'Build a prioritisation framework so AI projects compete on business impact, not enthusiasm. Define KPIs before you build, not after.':'Well-governed. Shift focus to ROI measurement and scaling what\'s proven — your structure supports it.';
+    else cats[c].a=p<.5?'Invest in role-specific enablement and quick wins that make AI feel real for your team. Change management is as critical as the technology — teams that don\'t trust the tools won\'t use them.':p<.75?'Move from general awareness to hands-on practice. The teams pulling ahead are those building muscle memory with AI in their daily workflows, not just in workshops.':'AI-ready culture. Channel this into structured experimentation — your team has the mindset to push into agentic workflows.';
+  }
+
+  // Determine which blockers the user selected (O2)
+  const blockerSel=A['O2']||[];
+  const blockerOpts=['Our data is a mess','We don\'t have the skills','We can\'t prove the ROI','Legal or compliance concerns','Too many options, hard to choose','No leadership buy-in or budget','Our tools don\'t support it'];
+  const blockerMsgs={
+    0:'Data being a mess is the most common blocker we see — and the most fixable. Clean, well-structured data isn\'t a prerequisite you wait for; it\'s something you scope and sequence alongside your AI roadmap.',
+    1:'Skill gaps are real but move fast. The bigger risk is waiting for perfect capability before starting — focused pilots with clear success metrics build the expertise.',
+    2:'ROI is genuinely hard to prove before you\'ve shipped something. Define your KPIs before you build, not after, and start with use cases where the baseline is already measurable.',
+    3:'Regulatory and compliance concerns are the #1 barrier across European B2B organisations — you\'re in the majority. The good news: clear guardrails make deployment faster, not slower.',
+    4:'Too many options is a strategy problem, not a technology problem. The answer is narrowing to the use cases with the most friction in your current customer journey.',
+    5:'Leadership buy-in follows demonstrated results. Start with a use case you can prove in 6–8 weeks and let the numbers do the convincing.',
+    6:'Tool limitations are often a data architecture problem in disguise. Most modern stacks can support AI agents — the question is what context you can feed them.'
+  };
+  let blockerHtml='';
+  if(blockerSel.length>0){
+    blockerHtml=`<div class="bd" style="border-left:3px solid var(--burgundy)"><div class="bd-t">Your blockers</div>`;
+    blockerSel.forEach(i=>{
+      blockerHtml+=`<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px">${blockerOpts[i]}</div><div style="font-size:13px;color:var(--black);line-height:1.5">${blockerMsgs[i]}</div></div>`;
+    });
+    blockerHtml+=`</div>`;
+  }
+
+  let lv,stage,bg,fg,desc;
+  if(tot<=10){lv='Stage 1: Pilots & POCs';stage='Where most B2B companies are';bg='var(--pink)';fg='var(--black)';desc='Idea lists, isolated experiments, a few tools live. This is where most B2B companies are in 2026 — the priority is moving from scattered tools to a narrow, well-defined use case running in production.'}
+  else if(tot<=15){lv='Stage 1–2: Building to Production';stage='Approaching the AI leaders';bg='var(--yellow)';fg='var(--black)';desc='Real traction, but still project-based. The gap to close is moving from isolated pilots to a single agent running in production with clear KPIs — that\'s what separates the experimenters from the operators.'}
+  else if(tot<=20){lv='Stage 2: Single Agents in Production';stage='Where the AI leaders are now';bg='var(--light-blue)';fg='var(--black)';desc='Narrow, well-defined use cases running in production. You\'re where the AI leaders are today — the next move is connecting individual agents into multi-step workflows and measuring compounding commercial impact.'}
+  else{lv='Stage 3: Multi-Agent Systems';stage='At the AI frontier';bg='var(--forest)';fg='var(--white)';desc='Ahead of the curve. You\'re building toward the coordinated, agentic commercial engine that most B2B organisations are still planning for. The competitive advantage now comes from proprietary data loops and agent architectures others can\'t replicate quickly.'}
+
+  // ── ROI model ────────────────────────────────────────────────────────────
+  // Deal size midpoints (€)
+  const dealMids=[5000,30000,100000,600000,1500000];
+  const dealIdx=A['S1'];
+  const dealVal=dealIdx!==undefined?dealMids[dealIdx]:null;
+
+  // Close rate midpoints
+  const closeMids=[0.07,0.15,0.275,0.425,0.60,null];
+  const closeIdx=A['S2'];
+  const closeRate=closeIdx!==undefined?closeMids[closeIdx]:null;
+
+  // Admin time midpoints
+  const adminMids=[0.10,0.30,0.50,0.70];
+  const adminIdx=A['S3'];
+  const adminRate=adminIdx!==undefined?adminMids[adminIdx]:null;
+
+  // Lead volume midpoints
+  const leadMids=[25,125,600,3000,7500];
+  const leadIdx=A['M1'];
+  const leadVol=leadIdx!==undefined?leadMids[leadIdx]:null;
+
+  // Lead-to-conversation rate midpoints
+  const convMids=[0.03,0.10,0.225,0.35,null];
+  const convIdx=A['M2'];
+  const convRate=convIdx!==undefined?convMids[convIdx]:null;
+
+  // Team size midpoints
+  const teamMids=[5,30,125,200];
+  const teamIdx=A['P2'];
+  const teamSize=teamMids[teamIdx!==undefined?teamIdx:1];
+
+  // Conservative AI impact assumptions (sourced from chiefmartec / McKinsey benchmarks)
+  // Close rate lift: +15% relative (e.g. 20% → 23%)
+  // Admin time recovered: 25% of current admin hours redirected to selling
+  // Lead conversion lift: +20% relative
+  const CLOSE_LIFT=0.15;
+  const ADMIN_RECOVERY=0.25;
+  const CONV_LIFT=0.20;
+  const SELLING_WEEKS=46; // weeks/year after holidays
+  const HOURS_PER_WEEK=40;
+
+  let roiItems=[];
+
+  // 1. Close rate improvement
+  if(dealVal&&closeRate){
+    // Assume a rep closes ~dealVal per deal, team handles roughly teamSize*10 qualified opps/year
+    const oppsPerYear=teamSize*10;
+    const dealsNow=oppsPerYear*closeRate;
+    const dealsNew=oppsPerYear*(closeRate*(1+CLOSE_LIFT));
+    const uplift=Math.round((dealsNew-dealsNow)*dealVal);
+    roiItems.push({label:'Close rate improvement',detail:`+${Math.round(CLOSE_LIFT*100)}% relative lift on your current close rate`,value:uplift,note:'Based on AI-assisted follow-up, smarter lead scoring, and real-time deal coaching'});
+  }
+
+  // 2. Admin time recovered → more selling time
+  if(adminRate&&dealVal&&closeRate){
+    const adminHoursPerRep=SELLING_WEEKS*HOURS_PER_WEEK*adminRate;
+    const recoveredHours=adminHoursPerRep*ADMIN_RECOVERY*teamSize;
+    // Convert recovered hours to revenue: assume 1 extra deal per 40h recovered per rep
+    const extraDeals=Math.floor(recoveredHours/40);
+    const uplift=Math.round(extraDeals*dealVal*closeRate);
+    const hrsPerRep=Math.round(adminHoursPerRep*ADMIN_RECOVERY);
+    roiItems.push({label:'Time recovered from admin',detail:`~${hrsPerRep} hrs/rep/year redirected to selling`,value:uplift,note:'AI handles CRM logging, meeting prep, and follow-up drafts automatically'});
+  }
+
+  // 3. Lead conversion improvement
+  if(leadVol&&convRate&&dealVal){
+    const leadsPerYear=leadVol*12;
+    const convsNow=leadsPerYear*convRate;
+    const convsNew=leadsPerYear*(convRate*(1+CONV_LIFT));
+    // Assume same close rate on new conversations; use closeRate if available, else 0.20 default
+    const cr=closeRate||0.20;
+    const uplift=Math.round((convsNew-convsNow)*cr*dealVal);
+    roiItems.push({label:'Lead-to-conversation rate',detail:`+${Math.round(CONV_LIFT*100)}% relative lift from better targeting & follow-up`,value:uplift,note:'AI-powered outreach personalisation and automated nurture sequences'});
+  }
+
+  const totalUplift=roiItems.reduce((s,r)=>s+r.value,0);
+  const hasRoi=roiItems.length>0;
+
+  function fmtEur(n){
+    if(n>=1000000)return '€'+Math.round(n/100000)/10+'M';
+    if(n>=1000)return '€'+Math.round(n/1000)+'K';
+    return '€'+n;
+  }
+
+  let roiHtml='';
+  if(hasRoi){
+    roiHtml=`<div style="background:var(--forest);color:var(--white);padding:24px 16px;margin-bottom:2px">
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--yellow);margin-bottom:4px">AI Impact Estimate</div>
+      <div style="font-family:var(--display);font-size:1.375rem;font-weight:400;margin-bottom:4px">Where the commercial upside is</div>
+      <div style="font-size:13px;opacity:.8;margin-bottom:20px">Conservative estimates based on your inputs. Assumes gradual adoption over 12 months.</div>`;
+
+    roiItems.forEach(r=>{
+      roiHtml+=`<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:600">${r.label}</div>
+          <div style="font-family:var(--display);font-size:1.25rem;color:var(--yellow);white-space:nowrap">${fmtEur(r.value)}</div>
+        </div>
+        <div style="font-size:12px;opacity:.75;margin-bottom:4px">${r.detail}</div>
+        <div style="font-size:11px;opacity:.55;font-style:italic">${r.note}</div>
+      </div>`;
+    });
+
+    roiHtml+=`<div style="border-top:1px solid rgba(255,255,255,.2);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.7">Estimated annual upside</div>
+      <div style="font-family:var(--display);font-size:1.75rem;color:var(--yellow)">${fmtEur(totalUplift)}</div>
+    </div>
+    <div style="font-size:11px;opacity:.45;margin-top:8px">These figures are illustrative. Actual results depend on implementation quality, data readiness, and change management.</div>
+    </div>`;
+  }
+
+  // ── Next step roadmap ────────────────────────────────────────────────────
+  const nextSteps={
+    0:{ // Stage 1
+      headline:'Your next move: ship one agent, not ten ideas',
+      steps:[
+        {n:'1',title:'Pick one friction point',body:'Look at your O3 answer — the task your team wastes most time on. That\'s your first use case. Narrow beats broad every time.'},
+        {n:'2',title:'Get your data in order first',body:'Before any agent can help, it needs clean, accessible data. Audit your CRM quality and close the biggest gaps in 4–6 weeks.'},
+        {n:'3',title:'Run a focused 6-week pilot',body:'Deploy a single agent on a well-defined task with a clear success metric. Prove the value before scaling.'},
+        {n:'4',title:'Establish governance early',body:'Assign an AI owner and write a one-page policy. Shadow AI tools create technical debt and compliance risk — get ahead of it now.'},
+      ]
+    },
+    1:{ // Stage 1-2
+      headline:'Your next move: get one agent fully into production',
+      steps:[
+        {n:'1',title:'Stop piloting, start shipping',body:'Choose the pilot closest to production-ready and commit to a go-live date. A live agent with real users beats three experiments in a staging environment.'},
+        {n:'2',title:'Connect your tools',body:'Your AI integration score suggests gaps between systems. Agents are only as useful as the context they can reach — CRM, email, and intent data should flow freely.'},
+        {n:'3',title:'Define your KPIs now',body:'Before you scale, establish the baseline metrics. Close rate, response time, pipeline velocity — pick two and instrument them before the agent goes live.'},
+        {n:'4',title:'Build your agent ops muscle',body:'Running agents in production is different from running pilots. Plan for monitoring, edge cases, and a feedback loop from the sales team.'},
+      ]
+    },
+    2:{ // Stage 2
+      headline:'Your next move: connect your agents into workflows',
+      steps:[
+        {n:'1',title:'Map the handoffs',body:'Where do your current agents hand off to humans or to other systems? Those seams are where value leaks. Design for seamless orchestration.'},
+        {n:'2',title:'Start building proprietary data loops',body:'The competitive advantage in Stage 3 isn\'t the model — it\'s the data the model learns from. Start capturing agent outputs and outcomes as training signal.'},
+        {n:'3',title:'Measure compounding impact',body:'Individual agent ROI is table stakes. Build a dashboard that shows how connected agents affect pipeline velocity, not just individual task completion.'},
+        {n:'4',title:'Plan your agentic workforce',body:'Multi-agent systems need an orchestration layer. Start designing the supervisor-specialist architecture that will run your commercial operations at scale.'},
+      ]
+    },
+    3:{ // Stage 3
+      headline:'Your next move: widen the moat',
+      steps:[
+        {n:'1',title:'Invest in proprietary data advantages',body:'At Stage 3, your edge comes from data others don\'t have. Build systems that capture unique commercial signals — customer behaviour, deal context, competitive intel.'},
+        {n:'2',title:'Instrument for compounding',body:'Measure not just what each agent does, but how the system improves over time. Dreaming loops and self-critique patterns should be part of your agent ops.'},
+        {n:'3',title:'Extend to your commercial ecosystem',body:'The next frontier is agents that operate across your partner network, customer base, and supply chain — not just internal processes.'},
+        {n:'4',title:'Share what you\'ve learned',body:'You\'re ahead of most B2B organisations. The September 1 event is a good place to exchange notes with peers and find where even leaders have blind spots.'},
+      ]
+    }
+  };
+
+  const stageKey=tot<=10?0:tot<=15?1:tot<=20?2:3;
+  const ns=nextSteps[stageKey];
+
+  // ── Capture result snapshot for n8n webhook ──────────────────────────────
+  const _dealLbls=['Under \u20ac10K','\u20ac10K\u2013\u20ac50K','\u20ac50K\u2013\u20ac200K','\u20ac200K\u2013\u20ac1M','\u20ac1M+'];
+  const _closeLbls=['Under 10%','10\u201320%','20\u201335%','35\u201350%','Over 50%',"We don't track this"];
+  const _adminLbls=['Under 20%','20\u201340%','40\u201360%','Over 60%'];
+  const _leadLbls=['Under 50','50\u2013200','200\u20131K','1K\u20135K','5K+'];
+  const _convLbls=['Under 5%','5\u201315%','15\u201330%','Over 30%',"We don't track this"];
+  const _roleLbls=['Sales leadership','Marketing leadership','Both / Revenue leadership'];
+  const _teamLbls=['Under 10','10\u201350','50\u2013200','200+'];
+  const _toolLbls=['No shared tools \u2014 individuals only','AI assistants (Copilot/ChatGPT)','Workflow / agent platform','AI embedded across commercial stack'];
+  const _agentLbls=["No \u2014 haven't looked into it","We have identified a list of use cases to explore",'Ran a pilot or experiment','One or two running in production','Multiple agents live across sales & marketing'];
+  const _integLbls=['Manual copy-paste','Basic automations','API / MCP connections','Unified data layer'];
+  const _dataLbls=['Siloed & incomplete','Centralised but dirty','Clean & enriched','Unified with behavioural signals'];
+  const _govLbls=['No ownership','Tech / IT owns it','Business units own it','Centralised AI team','Federated model'];
+  const _attLbls=['Avoiding it','Curious but cautious','Using it regularly','Pushing for more'];
+  const _oppLbls=['Finding and targeting new leads','Qualifying leads faster','Creating content at scale','Following up with prospects','Forecasting revenue','Researching accounts & competitors','Generating proposals & RFPs','Handoffs between marketing and sales','Internal ops & reporting'];
+  const _blkLbls=["Our data is a mess","We don't have the skills","We can't prove the ROI","Legal or compliance concerns","Too many options, hard to choose","No leadership buy-in or budget","Our tools don't support it"];
+  const _dm=(key,lbs)=>(A[key]||[]).map(i=>lbs[i]).join('; ')||'';
+
+  QUIZ_RESULT={
+    score:tot,score_max:mx,score_pct:Math.round(tot/mx*100),
+    stage:lv,
+    adoption_score:cats['Adoption & Tooling'].s+'/'+cats['Adoption & Tooling'].mx,
+    data_score:cats['Data Readiness'].s+'/'+cats['Data Readiness'].mx,
+    governance_score:cats['Governance'].s+'/'+cats['Governance'].mx,
+    team_readiness_score:cats['Team Readiness'].s+'/'+cats['Team Readiness'].mx,
+    roi_estimate_eur:hasRoi?totalUplift:null,
+    role:A['P1']!==undefined?_roleLbls[A['P1']]:'',
+    team_size:A['P2']!==undefined?_teamLbls[A['P2']]:'',
+    deal_size:A['S1']!==undefined?_dealLbls[A['S1']]:'',
+    close_rate:A['S2']!==undefined?_closeLbls[A['S2']]:'',
+    admin_time:A['S3']!==undefined?_adminLbls[A['S3']]:'',
+    monthly_leads:A['M1']!==undefined?_leadLbls[A['M1']]:'',
+    lead_to_conv:A['M2']!==undefined?_convLbls[A['M2']]:'',
+    ai_tools:A['A1']!==undefined?_toolLbls[A['A1']]:'',
+    ai_agents:A['A2']!==undefined?_agentLbls[A['A2']]:'',
+    ai_integration:A['A3']!==undefined?_integLbls[A['A3']]:'',
+    data_quality:A['B1']!==undefined?_dataLbls[A['B1']]:'',
+    governance_owner:A['C1']!==undefined?_govLbls[A['C1']]:'',
+    team_attitude:A['D1']!==undefined?_attLbls[A['D1']]:'',
+    top_opportunities:_dm('O1',_oppLbls),
+    top_blockers:_dm('O2',_blkLbls),
+    biggest_time_waste:A['O3_open']||'',
+    roadmap_headline:ns.headline
+  };
+
+  let nextHtml=`<div style="background:var(--cream);padding:24px 16px 8px">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--burgundy);margin-bottom:4px">Your AI Roadmap</div>
+    <div style="font-family:var(--display);font-size:1.375rem;font-weight:400;color:var(--navy);margin-bottom:16px;line-height:1.3">${ns.headline}</div>`;
+
+  ns.steps.forEach(s=>{
+    nextHtml+=`<div style="display:flex;gap:12px;margin-bottom:14px">
+      <div style="min-width:28px;height:28px;border-radius:9999px;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px">${s.n}</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:3px">${s.title}</div>
+        <div style="font-size:13px;color:var(--grey-b);line-height:1.5">${s.body}</div>
+      </div>
+    </div>`;
+  });
+
+  nextHtml+=`<div style="background:var(--navy);border-radius:8px;padding:14px;margin-top:8px;margin-bottom:16px">
+    <div style="font-size:13px;color:var(--white);line-height:1.5;opacity:.9">${ns.cta}</div>
+  </div></div>`;
+
+  // ── Score ring ───────────────────────────────────────────────────────────
+  const pct=tot/mx*100,circ=2*Math.PI*66,off=circ-(pct/100)*circ;
+
+  // Helper: collapsible panel wrapper
+  function panel(id,label,innerHtml,startOpen=true){
+    return `<div class="panel-wrap" id="pw-${id}">
+      <div class="panel-hdr ${startOpen?'':'closed'}" onclick="togglePanel('${id}')">
+        <span class="panel-title">${label}</span>
+        <span class="panel-chevron"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div>
+      <div class="panel-body ${startOpen?'':'closed'}" id="pb-${id}">${innerHtml}</div>
+    </div>`;
+  }
+
+  let h=`<div class="sec on"><div class="res-hero">
+    <div class="tag">Your Results</div>
+    <h2>AI Maturity Score</h2>
+    <div class="ring-wrap"><div class="ring">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="66" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/>
+        <circle cx="80" cy="80" r="66" fill="none" stroke="var(--yellow)" stroke-width="7"
+          stroke-dasharray="${circ}" stroke-dashoffset="${circ}" stroke-linecap="round" id="arc"
+          style="transition:stroke-dashoffset 1.2s var(--ease)"/>
+      </svg>
+      <div class="ring-txt"><div class="ring-num">${tot}</div><div class="ring-max">out of ${mx}</div></div>
+    </div></div>
+    <div class="badge" style="background:${bg};color:${fg}">${lv}</div>
+    <div style="font-size:12px;opacity:.7;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:500">${stage}</div>
+    <p class="res-desc">${desc}</p>
+    <button onclick="togglePanel('breakdown')" style="background:none;border:none;color:var(--yellow);font-family:var(--body);font-size:13px;font-weight:500;cursor:pointer;margin-top:12px;padding:4px 0;text-decoration:underline;text-underline-offset:3px;opacity:.85" id="detailsBtn">See score details ↓</button>
+  </div>
+
+  <a href="${MEET_URL}" target="_blank" class="get-pdf-btn" style="background:var(--navy);text-decoration:none">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 7h14M5 1v4M11 1v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Book a meeting
+  </a>
+
+  <div class="bd-grid">`;
+
+  // ROI panel
+  if(hasRoi){
+    const roiInner=`<div style="padding:0 0 4px">`+
+      roiItems.map(r=>`<div style="padding:14px 16px;border-bottom:1px solid var(--grey-d)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">${r.label}</div>
+          <div style="font-family:var(--display);font-size:1.2rem;color:var(--forest);white-space:nowrap">${fmtEur(r.value)}</div>
+        </div>
+        <div style="font-size:12px;color:var(--taupe);margin-bottom:3px">${r.detail}</div>
+        <div style="font-size:11px;color:var(--grey-c);font-style:italic">${r.note}</div>
+      </div>`).join('')+
+      `<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--cream)">
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--taupe)">Estimated annual upside</div>
+        <div style="font-family:var(--display);font-size:1.5rem;color:var(--navy)">${fmtEur(totalUplift)}</div>
+      </div>
+      <div style="padding:8px 16px 14px;font-size:11px;color:var(--grey-c);font-style:italic">Conservative estimates. Actual results depend on implementation quality, data readiness, and change management.</div>
+      </div>`;
+    h+=panel('roi','AI Impact Estimate',roiInner,false);
+  }
+
+  // Next step panel
+  const nextInner=`<div style="padding:16px">
+    <div style="font-family:var(--display);font-size:1.1rem;color:var(--navy);margin-bottom:14px;line-height:1.3">${ns.headline}</div>`+
+    ns.steps.map(s=>`<div style="display:flex;gap:12px;margin-bottom:14px">
+      <div style="min-width:26px;height:26px;border-radius:9999px;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">${s.n}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px">${s.title}</div>
+        <div style="font-size:13px;color:var(--grey-b);line-height:1.5">${s.body}</div>
+      </div>
+    </div>`).join('')+
+    `</div>`;
+  h+=panel('next','Your AI Roadmap',nextInner,false);
+
+  // Blockers panel
+  if(blockerSel.length>0){
+    const blkInner=`<div style="padding:4px 0">`+
+      blockerSel.map(i=>`<div style="padding:12px 16px;border-bottom:1px solid var(--grey-d)">
+        <div style="font-size:13px;font-weight:600;color:var(--burgundy);margin-bottom:3px">${blockerOpts[i]}</div>
+        <div style="font-size:13px;color:var(--grey-b);line-height:1.5">${blockerMsgs[i]}</div>
+      </div>`).join('')+`</div>`;
+    h+=panel('blockers','Your Blockers',blkInner,false);
+  }
+
+  // Score breakdown — all four dimensions in one collapsed panel
+  let dimInnerAll=`<div style="padding:4px 0">`;
+  for(const c in cats){
+    const ct=cats[c],cp=ct.mx>0?ct.s/ct.mx*100:0;
+    dimInnerAll+=`<div style="padding:14px 16px;border-bottom:1px solid var(--grey-d)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--taupe)">${c}</div>
+        <div style="display:flex;align-items:baseline;gap:3px">
+          <div style="font-family:var(--display);font-size:1.1rem;color:var(--black)">${ct.s}</div>
+          <div style="font-size:11px;color:var(--taupe)">/ ${ct.mx}</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--grey-d);border-radius:9999px;overflow:hidden;margin-bottom:8px">
+        <div class="bd-fill" style="width:0%;height:100%;background:${ct.c};border-radius:9999px;transition:width 1s var(--ease)" data-w="${cp}"></div>
+      </div>
+      <div style="font-size:12px;color:var(--grey-b);line-height:1.5">${ct.a}</div>
+    </div>`;
+  }
+  dimInnerAll+=`</div>`;
+  h+=panel('breakdown','Score breakdown',dimInnerAll,false);
+
+  h+=`</div></div>`;
+
+  document.getElementById('box').innerHTML=h;
+  scroll();
+  requestAnimationFrame(()=>{setTimeout(()=>{
+    document.getElementById('arc').style.strokeDashoffset=off;
+    document.querySelectorAll('.bd-fill').forEach(e=>{e.style.width=e.dataset.w+'%'});
+  },80)});
+
+  // Auto-fire webhook — email was collected at the gate
+  fetch(N8N_WEBHOOK_URL,{
+    method:'POST',
+    mode:'no-cors',   // required for Google Apps Script — response not needed
+    body:JSON.stringify({submitted_at:new Date().toISOString(),name:GATE_NAME,email:GATE_EMAIL,...QUIZ_RESULT})
+  }).catch(err=>console.warn('Webhook error:',err));
+}
+
+// ── Collapsible panels ──────────────────────────────────────────────────────
+function togglePanel(id){
+  const hdr=document.querySelector(`#pw-${id} .panel-hdr`);
+  const body=document.getElementById(`pb-${id}`);
+  if(!hdr||!body)return;
+  const closing=!body.classList.contains('closed');
+  body.classList.toggle('closed',closing);
+  hdr.classList.toggle('closed',closing);
+  // Update hero link label and scroll for the breakdown panel
+  if(id==='breakdown'){
+    const btn=document.getElementById('detailsBtn');
+    if(btn)btn.textContent=closing?'See score details ↓':'Hide score details ↑';
+    if(!closing){
+      // Scroll to the panel after it opens
+      setTimeout(()=>{
+        const pw=document.getElementById('pw-breakdown');
+        if(pw)pw.scrollIntoView({behavior:'smooth',block:'start'});
+      },50);
+    }
+  }
+}
+
+// ── CONFIGURATION ──────────────────────────────────────────────────────────
+const N8N_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby-Zy07mCjO1Cztm9qpGx61ToDO1JokwzLPhJ3VcN3yS0IZ_wzt0MDoKNzwD_czHlXH/exec';
+// Paste your Google Calendar / Cal.com booking link here
+const MEET_URL = 'https://calendar.app.google/R3Ku9uvWNCaagR15A';
+// ───────────────────────────────────────────────────────────────────────────
+
+build();
+</script>
+</body>
+</html>
